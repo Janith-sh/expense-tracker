@@ -1,0 +1,9 @@
+:root {
+  --primary: #4f46e5;      /* Indigo */
+  --secondary: #22c55e;    /* Green */
+  --background: #f8fafc;   /* Soft gray */
+  --card: #ffffff;
+  --text-dark: #0f172a;
+  --text-light: #64748b;
+  --danger: #ef4444;
+}
