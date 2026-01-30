@@ -33,17 +33,43 @@
         <span class="stat-label">Today's Total</span>
         <span class="stat-value">Rs. {{ todayTotal.toLocaleString() }}</span>
       </div>
+
+      <!-- User Menu -->
+      <div class="user-menu" @click="toggleUserMenu">
+        <div class="user-avatar">
+          {{ userInitials }}
+        </div>
+        <span class="user-name">{{ userName }}</span>
+        <span class="dropdown-arrow">▼</span>
+        
+        <div v-if="showUserMenu" class="user-dropdown">
+          <div class="user-info">
+            <strong>{{ userName }}</strong>
+            <span class="user-email">{{ userEmail }}</span>
+          </div>
+          <hr>
+          <button @click="handleLogout" class="logout-btn">
+            <span>🚪</span> Logout
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '../../composables/useAuth'
 
 defineEmits(['toggle-sidebar'])
 
+const router = useRouter()
+const { user, logout } = useAuth()
+
 const searchQuery = ref('')
 const todayTotal = ref(850)
+const showUserMenu = ref(false)
 
 const currentHour = new Date().getHours()
 const greeting = computed(() => {
@@ -60,6 +86,38 @@ const formattedDate = computed(() => {
     month: 'long', 
     day: 'numeric' 
   })
+})
+
+const userName = computed(() => user.value?.name || 'User')
+const userEmail = computed(() => user.value?.email || '')
+const userInitials = computed(() => {
+  const name = userName.value
+  return name.split(' ').map(n => n[0]).join('').toUpperCase()
+})
+
+const toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
+const handleLogout = () => {
+  logout()
+  router.push('/login')
+}
+
+// Close dropdown when clicking outside
+const handleClickOutside = (event) => {
+  const userMenu = event.target.closest('.user-menu')
+  if (!userMenu) {
+    showUserMenu.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -177,6 +235,110 @@ const formattedDate = computed(() => {
   font-weight: 700;
 }
 
+/* User Menu */
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.user-menu:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-dark);
+  flex: 1;
+  font-size: 14px;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  color: var(--text-light);
+  transition: transform 0.2s;
+}
+
+.user-menu:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.user-info {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-info strong {
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.user-email {
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.user-dropdown hr {
+  margin: 0;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+}
+
+.logout-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #dc2626;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #fef2f2;
+}
+
 @media (max-width: 768px) {
   .topbar {
     flex-direction: column;
@@ -194,6 +356,17 @@ const formattedDate = computed(() => {
   }
 
   .quick-stat {
+    width: 100%;
+  }
+
+  .user-menu {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-dropdown {
+    right: auto;
+    left: 0;
     width: 100%;
   }
 
